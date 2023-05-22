@@ -1,0 +1,121 @@
+
+npx create-react-app video-store-app
+-----------------------------------------
+npx create-react-app video-store-app
+-----------------------------------------
+import React, { useState } from 'react';
+import mysql from 'mysql';
+
+const connection = mysql.createConnection({
+  host: 'localhost',
+  user: 'your_mysql_username',
+  password: 'your_mysql_password',
+  database: 'video_store_db',
+});
+
+const App = () => {
+  const [customerName, setCustomerName] = useState('');
+  const [dateOut, setDateOut] = useState('');
+  const [dateDueIn, setDateDueIn] = useState('');
+  const [customersNotReturned, setCustomersNotReturned] = useState([]);
+  const [customersWithFine, setCustomersWithFine] = useState([]);
+
+  const rentVideo = () => {
+    connection.query(
+      'INSERT INTO Rent_Info (customer_name, date_out, date_due_in) VALUES (?, ?, ?)',
+      [customerName, dateOut, dateDueIn],
+      (error) => {
+        if (error) throw error;
+        console.log('Video rented successfully!');
+      }
+    );
+  };
+
+  const returnVideo = () => {
+    const currentDate = new Date().toISOString().split('T')[0];
+    connection.query(
+      'UPDATE Rent_Info SET date_returned = ? WHERE customer_name = ?',
+      [currentDate, customerName],
+      (error) => {
+        if (error) throw error;
+        console.log('Video returned successfully!');
+      }
+    );
+  };
+
+  const getCustomersNotReturned = () => {
+    connection.query(
+      'SELECT customer_name FROM Rent_Info WHERE date_returned IS NULL',
+      (error, results) => {
+        if (error) throw error;
+        setCustomersNotReturned(results.map((row) => row.customer_name));
+      }
+    );
+  };
+
+  const getCustomersWithFine = () => {
+    connection.query(
+      'SELECT customer_name, fine FROM Rent_Info WHERE date_returned > date_due_in',
+      (error, results) => {
+        if (error) throw error;
+        setCustomersWithFine(results);
+      }
+    );
+  };
+
+  return (
+    <div>
+      <h1>Video Store Application</h1>
+
+      <h2>Rent Video</h2>
+      <input
+        type="text"
+        placeholder="Customer Name"
+        value={customerName}
+        onChange={(e) => setCustomerName(e.target.value)}
+      />
+      <input
+        type="date"
+        placeholder="Date Out"
+        value={dateOut}
+        onChange={(e) => setDateOut(e.target.value)}
+      />
+      <input
+        type="date"
+        placeholder="Date Due In"
+        value={dateDueIn}
+        onChange={(e) => setDateDueIn(e.target.value)}
+      />
+      <button onClick={rentVideo}>Rent</button>
+
+      <h2>Return Video</h2>
+      <input
+        type="text"
+        placeholder="Customer Name"
+        value={customerName}
+        onChange={(e) => setCustomerName(e.target.value)}
+      />
+      <button onClick={returnVideo}>Return</button>
+
+      <h2>Customers Not Returned Video</h2>
+      <button onClick={getCustomersNotReturned}>Get List</button>
+      <ul>
+        {customersNotReturned.map((customer) => (
+          <li key={customer}>{customer}</li>
+        ))}
+      </ul>
+
+      <h2>Customers with Fine</h2>
+      <button onClick={getCustomersWithFine}>Get List</button>
+      <ul>
+        {customersWithFine.map((customer) => (
+          <li key={customer.customer_name}>
+            {customer.customer_name} - Fine: {customer.fine}
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+};
+
+export default App;

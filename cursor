@@ -1,0 +1,16 @@
+DECLARE
+  CURSOR employee_cursor IS
+    SELECT employee_id, first_name, last_name FROM employees WHERE department_id = 10;
+  emp_id employees.employee_id%TYPE;
+  emp_first_name employees.first_name%TYPE;
+  emp_last_name employees.last_name%TYPE;
+BEGIN
+  OPEN employee_cursor;
+  LOOP
+    FETCH employee_cursor INTO emp_id, emp_first_name, emp_last_name;
+    EXIT WHEN employee_cursor%NOTFOUND;
+    -- Process the fetched data
+    DBMS_OUTPUT.PUT_LINE('Employee ID: ' || emp_id || ', Name: ' || emp_first_name || ' ' || emp_last_name);
+  END LOOP;
+  CLOSE employee_cursor;
+END;
